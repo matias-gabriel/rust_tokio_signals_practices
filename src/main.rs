@@ -10,12 +10,12 @@ use tokio::time::Duration;
 /// when the task is complete.
 async fn run_background_task(seconds: u64, value: Arc<Mutex<u64>>) -> Result<(), Box<dyn Error + Send + Sync>> {
     tokio::time::sleep(Duration::from_secs(seconds)).await;
-    let mut new_value = value.lock().await;
-    println!("Shared value current: {}", new_value);
-    *new_value = seconds;
+    let mut locked_value = value.lock().await;
+    println!("Shared value current: {}", locked_value);
+    *locked_value = seconds;
 
     println!("Background task with duration of {} seconds has completed.", seconds);
-    println!("Shared value has been updated to: {}", new_value);
+    println!("Shared value has been updated to: {}", locked_value);
 
     Ok(())
 }
@@ -24,6 +24,7 @@ async fn run_background_task(seconds: u64, value: Arc<Mutex<u64>>) -> Result<(),
 /// Each task is represented by the `run_background_task` function.
 async fn run_background_tasks(times: Vec<u64>) -> Result<(), Box<dyn Error + Send + Sync>> {
     let mut futures = vec![];
+    // NOTE: We could use an `AtomicU64` too.
     let value = Arc::new(Mutex::new(0));
 
     for seconds in times {
